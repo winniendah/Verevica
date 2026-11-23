@@ -95,6 +95,36 @@ def tampilkan(lap: dict):
     for p in lap["peringatan"]:
         st.warning(p)
 
+    mode_output = st.segmented_control(
+        "Format tampilan",
+        options=["Ringkas", "Lengkap"],
+        default="Ringkas",
+    )
+
+    if mode_output == "Ringkas":
+        if lap["hasil_pemeriksaan"]:
+            for h in lap["hasil_pemeriksaan"]:
+                status = h["status_kepatuhan"]
+                rujukan = h["pasal_pedoman_rujukan"] or "Tidak ada rujukan ditemukan"
+                catatan = h["catatan_revisi_sekretaris"]
+                st.markdown(
+                    f"**{h['komponen_proposal']}** — {status}  \n"
+                    f"{catatan}  \n"
+                    f"_Rujukan: {rujukan}_"
+                )
+        if lap["komponen_gagal"]:
+            for g in lap["komponen_gagal"]:
+                st.error(f"{g['komponen']}: gagal divalidasi — {g['penyebab']}")
+        if lap["metrik"]:
+            m = lap["metrik"]
+            st.caption(
+                f"{m.get('model')} · {m.get('jumlah_panggilan_llm')} panggilan · "
+                f"{m.get('durasi_detik')} detik"
+            )
+        st.download_button("Unduh laporan JSON", json.dumps(lap, ensure_ascii=False, indent=2),
+                           file_name="laporan_verevica.json", mime="application/json")
+        return
+
     c = Counter(h["status_kepatuhan"] for h in lap["hasil_pemeriksaan"])
     k = st.columns(4)
     k[0].metric("Patuh", c["PATUH"])
